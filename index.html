@@ -719,6 +719,14 @@
     }
 
     function openSettingsModal() {
+        // 비밀번호 인증 절차 추가
+        const password = prompt('환경설정에 접근하려면 관리자 비밀번호를 입력해주세요:', '');
+        if (password === null) return; // 취소 버튼 클릭
+        if (password !== ADMIN_PASSWORD) {
+            alert('❌ 비밀번호가 일치하지 않습니다.');
+            return;
+        }
+        
         document.getElementById('settingsModal').classList.add('active');
         document.getElementById('company-name').value = companyInfo.name || "";
         document.getElementById('company-address').value = companyInfo.address || "";
@@ -754,6 +762,14 @@
     }
 
     function saveCompanyInfo() {
+        // 저장 전 비밀번호 재확인
+        const password = prompt('정보 저장을 위해 관리자 비밀번호를 입력해주세요:', '');
+        if (password === null) return; // 취소 버튼 클릭
+        if (password !== ADMIN_PASSWORD) {
+            alert('❌ 비밀번호가 일치하지 않습니다.');
+            return;
+        }
+        
         companyInfo.name = document.getElementById('company-name').value;
         companyInfo.address = document.getElementById('company-address').value;
         companyInfo.phone = document.getElementById('company-phone').value;
