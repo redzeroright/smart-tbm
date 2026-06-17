@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>스마트 TBM 안전보건 시스템 v2.0</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #00796b;
+            --secondary-color: #004d40;
+            --accent-color: #ffc107;
+            --danger-color: #d32f2f;
+            --bg-color: #f0f4f8;
+            --card-bg: #ffffff;
+            --text-color: #333;
+        }
+        body { font-family: 'Pretendard', 'Malgun Gothic', sans-serif; background-color: var(--bg-color); margin: 0; padding: 0; color: var(--text-color); line-height: 1.6; }
+        .container { max-width: 800px; margin: 0 auto; background: var(--card-bg); min-height: 100vh; box-shadow: 0 4px 20px rgba(0,0,0,0.08); display: flex; flex-direction: column; }
+        
+        header { background: var(--primary-color); color: white; padding: 25px 20px; text-align: center; position: sticky; top: 0; z-index: 100; }
+        header h1 { margin: 0; font-size: 24px; letter-spacing: -0.5px; }
+        header p { margin: 8px 0 15px; font-size: 14px; opacity: 0.8; }
+        
+        .nav-tabs { display: flex; background: rgba(0,0,0,0.15); border-radius: 8px; padding: 4px; gap: 4px; }
+        .tab-button { flex: 1; background: none; border: none; color: rgba(255,255,255,0.7); padding: 12px 5px; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.3s; border-radius: 6px; }
+        .tab-button.active-tab { background: #fff; color: var(--primary-color); box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+
+        .content { padding: 25px; flex: 1; }
+        .card { background: #fff; border: 1px solid #e1e8ed; border-radius: 12px; padding: 20px; margin-bottom: 25px; transition: transform 0.2s; }
+        .card-title { font-weight: 800; font-size: 18px; margin-bottom: 15px; color: var(--primary-color); border-left: 5px solid var(--primary-color); padding-left: 12px; display: flex; justify-content: space-between; align-items: center; }
+        
+        .status-dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .status-item { background: #f8f9fa; padding: 15px; border-radius: 10px; text-align: center; border: 1px solid #eee; }
+        .status-label { font-size: 12px; color: #666; margin-bottom: 5px; }
+        .status-value { font-size: 20px; font-weight: 800; color: var(--primary-color); }
+
+        .time-badge { background: #e0f2f1; color: var(--secondary-color); padding: 10px 15px; border-radius: 8px; font-size: 14px; font-weight: 700; margin-bottom: 20px; display: block; border: 1px solid #b2dfdb; text-align: center; }
+
+        label { font-weight: 700; font-size: 14px; display: block; margin-top: 15px; margin-bottom: 8px; color: #444; }
+        input, textarea, select { width: 100%; padding: 12px; border: 1.5px solid #d1d9e0; border-radius: 8px; box-sizing: border-box; font-size: 15px; margin-bottom: 12px; transition: border-color 0.2s; }
+        input:focus, textarea:focus, select:focus { outline: none; border-color: var(--primary-color); background-color: #f0f7f7; }
+        textarea { height: 100px; resize: vertical; }
+        
+        .info-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; border-radius: 8px; overflow: hidden; border: 1px solid #e1e8ed; }
+        .info-table th, .info-table td { border: 1px solid #e1e8ed; padding: 14px; text-align: left; font-size: 14px; }
+        .info-table th { background-color: #f8f9fa; width: 35%; color: #555; font-weight: 700; }
+        .hazard-text { color: var(--danger-color); font-weight: 700; }
+        .measure-text { color: #1565C0; font-weight: 700; }
+
+        .qr-container { text-align: center; padding: 20px; background: #fff; border: 2px dashed var(--primary-color); border-radius: 12px; margin: 20px 0; }
+        #qrcode { display: inline-block; margin-top: 10px; }
+        #qrcode img { margin: 0 auto; }
+
+        #signature-pad { border: 2px solid #d1d9e0; background: #fff; width: 100%; height: 180px; border-radius: 8px; cursor: crosshair; }
+        
+        button { width: 100%; padding: 16px; background: var(--primary-color); color: white; border: none; border-radius: 8px; font-weight: 700; font-size: 16px; cursor: pointer; margin-top: 10px; transition: background 0.2s, transform 0.1s; }
+        button:hover { background: var(--secondary-color); }
+        button:active { transform: scale(0.98); }
+        .btn-secondary { background: #546e7a; margin-top: 5px; padding: 12px; font-size: 14px; }
+        .btn-print { background: #2e7d32; }
+        .btn-kakao { background: #FFE812; color: #333; font-weight: 800; }
+        .btn-kakao:hover { background: #f5d800; }
+        .btn-image { background: #FF6F00; }
+        .btn-image:hover { background: #E65100; }
+        .btn-reset { background: #d32f2f; }
+        .btn-settings { background: #1976d2; }
+        .btn-settings:hover { background: #1565c0; }
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .btn-group button { margin-top: 0; font-size: 14px; padding: 14px; }
+
+        .page { display: none; }
+        .page.active-page { display: block; animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .worker-list { list-style: none; padding: 0; }
+        .worker-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
+        .worker-item:last-child { border-bottom: none; }
+        .status-signed { color: #2e7d32; font-weight: 700; }
+        
+        .legal-group { background: #fff8e1; padding: 15px; border-radius: 8px; border: 1px solid #ffe082; margin-top: 15px; }
+        .legal-tag { display: inline-block; background: #ff8f00; color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-bottom: 5px; font-weight: 800; }
+
+        /* 모바일 웹뷰 전용 스타일 (QR 접속 시) */
+        #mobile-view { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 1000; overflow-y: auto; padding: 20px; box-sizing: border-box; }
+
+        /* 비밀번호 모달 */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; padding: 30px; border-radius: 12px; max-width: 400px; width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,0.2); max-height: 80vh; overflow-y: auto; }
+        .modal-content h2 { margin-top: 0; color: var(--primary-color); }
+        .modal-content input { margin-bottom: 15px; }
+        .modal-content button { margin-top: 15px; }
+        .modal-btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .modal-btn-group button { margin-top: 0; }
+
+        /* 로고 미리보기 */
+        .logo-preview { width: 100%; max-width: 150px; height: auto; border: 2px solid #ddd; border-radius: 8px; margin-top: 10px; padding: 5px; background: #f9f9f9; }
+
+        /* 로딩 오버레이 */
+        #loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 3000; justify-content: center; align-items: center; flex-direction: column; }
+        #loading-overlay.active { display: flex; }
+        .spinner { width: 50px; height: 50px; border: 4px solid #f0f0f0; border-top: 4px solid var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* 숨겨진 이미지 렌더링 영역 */
+        #hidden-render-area { position: fixed; left: -9999px; top: -9999px; width: 800px; background: white; }
+
+        @media print {
+            body { background: white; }
+            .container { box-shadow: none; max-width: 100%; }
+            .no-print { display: none !important; }
+            .page { display: block !important; border: none; }
+            header { background: white; color: black; border-bottom: 3px double #000; padding: 10px 0; position: static; }
+            header p { color: #666; }
+            .card { border: 1px solid #000; padding: 15px; margin-bottom: 15px; page-break-inside: avoid; }
+            .card-title { color: black; border-bottom: 2px solid black; border-left: none; padding-left: 0; }
+            .info-table th { background-color: #f2f2f2 !important; -webkit-print-color-adjust: exact; }
+            .legal-group { background: none; border: 1px solid #ccc; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header class="no-print">
+        <h1>스마트 TBM 안전보건 시스템</h1>
+        <p>산업안전보건법 준수 · 현장 중심 데이터 연동 v2.0</p>
+        
+        <div class="nav-tabs">
+            <button id="btn-tab1" class="tab-button active-tab" onclick="changePage('page-step1', 'btn-tab1')">1. 세션 개설</button>
+            <button id="btn-tab2" class="tab-button" onclick="changePage('page-step2', 'btn-tab2')">2. 현장 진행</button>
+            <button id="btn-tab3" class="tab-button" onclick="changePage('page-step3', 'btn-tab3')">3. 기록부/출력</button>
+        </div>
+    </header>
+
+    <div class="content">
+        <!-- 1단계: 세션 개설 -->
+        <div id="page-step1" class="page active-page">
+            <div class="card">
+                <div class="card-title">⚙️ TBM 세션 설정 및 데이터 동기화</div>
+                
+                <div class="time-badge">🕒 시스템 현재 시간: <span id="current-time-display">로딩 중...</span></div>
+                
+                <label>TBM 리더(관리감독자) 성명 <span style="color:red">*</span></label>
+                <input type="text" id="input-leader" placeholder="예: 김철수 팀장">
+
+                <label>작업 장소</label>
+                <input type="text" id="input-location" value="제1공장 2층 자재창고 하역장">
+                
+                <label>작업 유형 (템플릿 선택)</label>
+                <select id="select-template" onchange="loadTemplate()">
+                    <option value="">-- 작업 유형을 선택하세요 (RA DB 연동) --</option>
+                    <option value="0">지게차 자재 하역 및 적재 작업</option>
+                    <option value="1">컨베이어 정비 및 점검</option>
+                    <option value="2">중량물 인력 운반 작업</option>
+                    <option value="3">고소 작업 (사다리/비계)</option>
+                    <option value="4">전기 설비 점검 및 보수</option>
+                    <option value="manual">직접 입력</option>
+                </select>
+
+                <div id="worktype-manual-area" style="display:none;">
+                    <label>직접 입력 작업유형</label>
+                    <input type="text" id="input-worktype">
+                </div>
+                
+                <label>중점 유해·위험요인</label>
+                <textarea id="input-hazards" placeholder="위험요인을 입력하세요"></textarea>
+                
+                <label>안전보건 감소대책 (TBM 지시사항)</label>
+                <textarea id="input-measures" placeholder="안전대책을 입력하세요"></textarea>
+                
+                <button type="button" onclick="createTbm()">TBM 개설 및 데이터 확정</button>
+            </div>
+        </div>
+
+        <!-- 2단계: 현장 진행 (QR코드 및 서명 현황) -->
+        <div id="page-step2" class="page">
+            <div class="status-dashboard">
+                <div class="status-item">
+                    <div class="status-label">전체 근로자</div>
+                    <div id="dash-total" class="status-value">0명</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">서명 완료</div>
+                    <div id="dash-signed" class="status-value" style="color: #2e7d32;">0명</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">📲 모바일 입장 QR코드</div>
+                <p style="font-size:13px; color:#666; text-align:center; margin-top:0;">근로자분들은 각자의 스마트폰으로 스캔하여 서명해 주세요.</p>
+                <div class="qr-container">
+                    <div id="qrcode"></div>
+                    <p style="font-size:12px; color:var(--primary-color); font-weight:700; margin-top:10px;">[현장 모바일 서명 세션 활성화 중]</p>
+                </div>
+                <button type="button" class="btn-secondary" onclick="openMobileView()">직접 서명하기 (이 기기에서 서명)</button>
+            </div>
+
+            <div class="card">
+                <div class="card-title">👥 서명 현황 실시간 카운팅</div>
+                <ul id="worker-list" class="worker-list">
+                    <!-- 서명한 근로자 목록이 여기에 추가됨 -->
+                    <li class="worker-item" style="color:#999; justify-content:center;">아직 서명한 근로자가 없습니다.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 3단계: 기록부 조회 및 출력 -->
+        <div id="page-step3" class="page">
+            <div class="card">
+                <div class="card-title no-print">📄 TBM 실시 기록부 (법적 증빙용)</div>
+                
+                <table class="info-table">
+                    <tr><th>TBM 실시 일시</th><td id="print-date" style="font-weight: 800;">-</td></tr>
+                    <tr><th>소요 시간</th><td id="print-duration">-</td></tr>
+                    <tr><th>TBM 리더</th><td id="print-leader">-</td></tr>
+                    <tr><th>작업 장소</th><td id="print-location">-</td></tr>
+                    <tr><th>작업 유형</th><td id="print-worktype">-</td></tr>
+                    <tr><th>유해위험요인</th><td id="print-hazards" class="hazard-text">-</td></tr>
+                    <tr><th>안전보건대책</th><td id="print-measures" class="measure-text">-</td></tr>
+                </table>
+
+                <div class="card-title">👷 참석 근로자 및 서명</div>
+                <div id="print-signatures-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <!-- 서명 이미지들이 여기에 출력됨 -->
+                </div>
+                
+                <div class="legal-group">
+                    <span class="legal-tag">산업안전보건법 기준 필수 항목</span>
+                    <div id="print-legal-info" style="font-size: 13px;">
+                        <!-- 법적 필수 항목 요약 -->
+                    </div>
+                </div>
+
+                <div class="no-print" style="margin-top:20px;">
+                    <div class="btn-group">
+                        <button type="button" class="btn-print" onclick="window.print()">🖨️ 고용노동부 제출용 출력</button>
+                        <button type="button" class="btn-kakao" onclick="shareTextToKakao()">💬 카톡 보내기</button>
+                    </div>
+                    <button type="button" class="btn-image" onclick="saveAsImage()">🖼️ 이미지 저장</button>
+                    <button type="button" class="btn-settings" onclick="openSettingsModal()">⚙️ 회사 정보 설정</button>
+                    <button type="button" class="btn-reset" onclick="confirmReset()">🔄 새로운 TBM 시작(관리자)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 모바일 서명 웹뷰 (가상 모바일 화면) -->
+<div id="mobile-view">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+        <h2 style="margin:0; font-size:18px; color:var(--primary-color);">스마트 TBM 서명</h2>
+        <button type="button" onclick="closeMobileView()" style="width:auto; padding:5px 10px; margin:0; background:#eee; color:#333; font-size:12px;">닫기</button>
+    </div>
+    
+    <div class="time-badge" id="mobile-tbm-time"></div>
+    
+    <table class="info-table" style="font-size:13px;">
+        <tr><th>장소</th><td id="mobile-location"></td></tr>
+        <tr><th>작업</th><td id="mobile-worktype"></td></tr>
+        <tr><th>위험</th><td id="mobile-hazards" class="hazard-text"></td></tr>
+        <tr><th>대책</th><td id="mobile-measures" class="measure-text"></td></tr>
+    </table>
+
+    <div class="card" style="padding:15px; border-color:var(--primary-color);">
+        <label>근로자 성명 <span style="color:red">*</span></label>
+        <input type="text" id="worker-name" placeholder="본인 성명을 입력하세요">
+        
+        <label>건강 상태 체크</label>
+        <select id="worker-health">
+            <option value="이상 없음">이상 없음 (작업 가능)</option>
+            <option value="피로/질병 호소">피로 또는 가벼운 통증</option>
+            <option value="음주/컨디션 난조">음주 의심 또는 심한 질병</option>
+        </select>
+
+        <label>개인보호구 착용 확인</label>
+        <div style="font-size:13px; margin-bottom:10px;">
+            <input type="checkbox" id="worker-ppe" style="width:auto; margin-bottom:0;"> 안전모, 안전화 등 필수 보호구 착용 완료
+        </div>
+
+        <label>의견 및 아차사고 건의</label>
+        <textarea id="worker-feedback" placeholder="현장 위험요인 등 의견이 있다면 입력하세요"></textarea>
+
+        <label>서명 (손가락으로 그리세요) <span style="color:red">*</span></label>
+        <canvas id="signature-pad"></canvas>
+        <button type="button" class="btn-secondary" onclick="clearCanvas()">서명 지우기</button>
+        
+        <button type="button" style="background:#4caf50; margin-top:20px;" onclick="submitSignature()">위험요인 확인 및 서명 제출</button>
+    </div>
+</div>
+
+<!-- 비밀번호 확인 모달 -->
+<div id="passwordModal" class="modal">
+    <div class="modal-content">
+        <h2>🔐 관리자 인증</h2>
+        <p style="color:#666; margin-bottom:20px;">새로운 TBM을 시작하려면 관리자 비밀번호를 입력하세요.</p>
+        
+        <label>비밀번호 <span style="color:red">*</span></label>
+        <input type="password" id="admin-password" placeholder="비밀번호를 입력하세요" onkeypress="if(event.key==='Enter') verifyPassword()">
+        
+        <div class="modal-btn-group">
+            <button type="button" style="background:#2e7d32; margin-top:0;" onclick="verifyPassword()">✅ 확인</button>
+            <button type="button" style="background:#546e7a; margin-top:0;" onclick="closePasswordModal()">❌ 취소</button>
+        </div>
+    </div>
+</div>
+
+<!-- 회사 정보 설정 모달 -->
+<div id="settingsModal" class="modal">
+    <div class="modal-content">
+        <h2>⚙️ 회사 정보 설정</h2>
+        <p style="color:#666; margin-bottom:15px;">출력물 및 이미지에 표시될 회사 정보를 입력하세요.</p>
+        
+        <label>회사명 <span style="color:red">*</span></label>
+        <input type="text" id="company-name" placeholder="예: 한국 안전 산업 주식회사">
+        
+        <label>회사 로고 이미지 업로드</label>
+        <input type="file" id="company-logo" accept="image/*" onchange="previewLogo()">
+        <div id="logo-preview-area"></div>
+        
+        <label>회사 주소 (선택사항)</label>
+        <input type="text" id="company-address" placeholder="예: 서울시 강남구 테헤란로 123">
+        
+        <label>회사 전화 (선택사항)</label>
+        <input type="text" id="company-phone" placeholder="예: 02-1234-5678">
+        
+        <div class="modal-btn-group">
+            <button type="button" style="background:#2e7d32; margin-top:0;" onclick="saveCompanyInfo()">✅ 저장</button>
+            <button type="button" style="background:#546e7a; margin-top:0;" onclick="closeSettingsModal()">❌ 취소</button>
+        </div>
+    </div>
+</div>
+
+<!-- 로딩 오버레이 -->
+<div id="loading-overlay">
+    <div class="spinner"></div>
+    <p style="margin-top:20px; font-size:16px; color:var(--primary-color); font-weight:bold;">처리 중...</p>
+</div>
+
+<!-- 숨겨진 렌더링 영역 (이미지 생성용) -->
+<div id="hidden-render-area"></div>
+
+<script>
+    // 위험성평가(RA) 데이터베이스 템플릿
+    const raDatabase = [
+        {
+            workType: "지게차 자재 하역 및 적재 작업",
+            hazards: "지게차 이동 통로에 근로자 교차 시 충돌 위험 및 화물 낙하 위험 유존",
+            measures: "지게차 유도자 배치 필수, 작업 반경 내 일반 근로자 출입 통제, 운전원 제한속도(10km/h) 준수"
+        },
+        {
+            workType: "컨베이어 정비 및 점검",
+            hazards: "가동 중인 컨베이어에 신체 끼임, 전원 미차단 시 갑작스러운 작동 위험",
+            measures: "LOTO(Lock-Out, Tag-Out) 실시, 2인 1조 작업, 비상정지장치 위치 확인"
+        },
+        {
+            workType: "중량물 인력 운반 작업",
+            hazards: "부적절한 자세로 인한 요통 발생, 중량물 낙하로 인한 발등 골절 위험",
+            measures: "2인 이상 공동 작업, 올바른 운반 자세 준수(무릎 굽히기), 안전화 및 보호장갑 착용"
+        },
+        {
+            workType: "고소 작업 (사다리/비계)",
+            hazards: "작업 중 추락(떨어짐) 위험, 도구 및 자재 낙하로 인한 하부 근로자 타격",
+            measures: "안전모 및 안전대 착용 필수, 하부 출입 통제 구역 설정, 2인 1조(하부 감시인 배치)"
+        },
+        {
+            workType: "전기 설비 점검 및 보수",
+            hazards: "충전부 접촉에 의한 감전 위험, 단락(쇼트)으로 인한 화재 및 화상",
+            measures: "절연 보호구 착용, 검전기를 통한 무전압 확인, 작업 중 표지판 게시"
+        }
+    ];
+
+    const ADMIN_PASSWORD = "45450";
+
+    let tbmData = {
+        leader: "",
+        location: "",
+        worktype: "",
+        hazards: "",
+        measures: "",
+        startTime: "",
+        duration: 10,
+        workers: []
+    };
+
+    let companyInfo = {
+        name: "",
+        logo: null,
+        address: "",
+        phone: ""
+    };
+
+    // 시간 업데이트 함수
+    function updateSystemTime() {
+        const now = new Date();
+        const timeStr = now.toLocaleString('ko-KR', { 
+            year: 'numeric', month: 'long', day: 'numeric', 
+            weekday: 'short', hour: '2-digit', minute: '2-digit', second: '2-digit'
+        });
+        const display = document.getElementById('current-time-display');
+        if (display) display.innerText = timeStr;
+    }
+    setInterval(updateSystemTime, 1000);
+    updateSystemTime();
+
+    function loadTemplate() {
+        const select = document.getElementById('select-template');
+        const manualArea = document.getElementById('worktype-manual-area');
+        
+        if (select.value === "manual") {
+            manualArea.style.display = "block";
+            document.getElementById('input-hazards').value = "";
+            document.getElementById('input-measures').value = "";
+        } else if (select.value !== "") {
+            manualArea.style.display = "none";
+            const data = raDatabase[select.value];
+            document.getElementById('input-hazards').value = data.hazards;
+            document.getElementById('input-measures').value = data.measures;
+            document.getElementById('input-worktype').value = data.workType;
+        }
+    }
+
+    function changePage(pageId, tabId) {
+        document.querySelectorAll('.page').forEach(page => page.classList.remove('active-page'));
+        document.getElementById(pageId).classList.add('active-page');
+        document.querySelectorAll('.tab-button').forEach(tab => tab.classList.remove('active-tab'));
+        document.getElementById(tabId).classList.add('active-tab');
+        window.scrollTo(0,0);
+    }
+
+    function createTbm() {
+        const leader = document.getElementById('input-leader').value;
+        if (!leader) { alert('TBM 리더 성명을 입력해주세요.'); return; }
+
+        tbmData.leader = leader;
+        tbmData.location = document.getElementById('input-location').value;
+        
+        const select = document.getElementById('select-template');
+        if (select.value === "manual") {
+            tbmData.worktype = document.getElementById('input-worktype').value;
+        } else if (select.value !== "") {
+            tbmData.worktype = raDatabase[select.value].workType;
+        } else {
+            alert('작업 유형을 선택해주세요.'); return;
+        }
+
+        tbmData.hazards = document.getElementById('input-hazards').value;
+        tbmData.measures = document.getElementById('input-measures').value;
+        tbmData.startTime = new Date().toLocaleString('ko-KR');
+
+        // 데이터 동기화 (Mirroring)
+        syncData();
+        
+        // QR코드 생성
+        const qrDiv = document.getElementById('qrcode');
+        qrDiv.innerHTML = "";
+        new QRCode(qrDiv, {
+            text: window.location.href + "?session=active",
+            width: 180,
+            height: 180
+        });
+
+        alert('TBM 세션이 성공적으로 개설되었습니다.\n근로자 서명 단계로 이동합니다.');
+        changePage('page-step2', 'btn-tab2');
+    }
+
+    function syncData() {
+        // 출력부 데이터 동기화
+        document.getElementById('print-date').innerText = tbmData.startTime;
+        document.getElementById('print-leader').innerText = tbmData.leader;
+        document.getElementById('print-location').innerText = tbmData.location;
+        document.getElementById('print-worktype').innerText = tbmData.worktype;
+        document.getElementById('print-hazards').innerText = tbmData.hazards;
+        document.getElementById('print-measures').innerText = tbmData.measures;
+        document.getElementById('print-duration').innerText = tbmData.duration + "분 내외";
+
+        // 모바일 뷰 데이터 동기화
+        document.getElementById('mobile-tbm-time').innerText = "⏱️ 실시 시간: " + tbmData.startTime;
+        document.getElementById('mobile-location').innerText = tbmData.location;
+        document.getElementById('mobile-worktype').innerText = tbmData.worktype;
+        document.getElementById('mobile-hazards').innerText = tbmData.hazards;
+        document.getElementById('mobile-measures').innerText = tbmData.measures;
+    }
+
+    // 서명 패드 관련 로직
+    const canvas = document.getElementById('signature-pad');
+    const ctx = canvas.getContext('2d');
+    let isDrawing = false;
+
+    function resizeCanvas() {
+        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+        canvas.width = canvas.offsetWidth * ratio;
+        canvas.height = canvas.offsetHeight * ratio;
+        ctx.scale(ratio, ratio);
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 2;
+    }
+
+    function getPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return { x: clientX - rect.left, y: clientY - rect.top };
+    }
+
+    canvas.addEventListener('mousedown', (e) => { isDrawing = true; ctx.beginPath(); const p = getPos(e); ctx.moveTo(p.x, p.y); });
+    canvas.addEventListener('mousemove', (e) => { if(!isDrawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); });
+    window.addEventListener('mouseup', () => isDrawing = false);
+
+    canvas.addEventListener('touchstart', (e) => { isDrawing = true; ctx.beginPath(); const p = getPos(e); ctx.moveTo(p.x, p.y); e.preventDefault(); }, {passive: false});
+    canvas.addEventListener('touchmove', (e) => { if(!isDrawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); e.preventDefault(); }, {passive: false});
+    window.addEventListener('touchend', () => isDrawing = false);
+
+    function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+
+    function openMobileView() {
+        document.getElementById('mobile-view').style.display = 'block';
+        setTimeout(resizeCanvas, 100);
+    }
+
+    function closeMobileView() {
+        document.getElementById('mobile-view').style.display = 'none';
+    }
+
+    function isCanvasEmpty(canvasElement) {
+        const ctx = canvasElement.getContext('2d');
+        const imageData = ctx.getImageData(0, 0, canvasElement.width, canvasElement.height);
+        const data = imageData.data;
+        
+        for (let i = 0; i < data.length; i += 4) {
+            if (data[i + 3] > 128) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function submitSignature() {
+        const name = document.getElementById('worker-name').value;
+        if (!name) { alert('성명을 입력해주세요.'); return; }
+        
+        // 서명 여부 검증 (핵심 추가 기능)
+        if (isCanvasEmpty(canvas)) {
+            alert('⚠️ 서명을 꼭 해주세요.\n\n서명란에 손가락으로 서명을 그려주세요.');
+            return;
+        }
+        
+        const health = document.getElementById('worker-health').value;
+        const ppe = document.getElementById('worker-ppe').checked;
+        const feedback = document.getElementById('worker-feedback').value;
+        const signature = canvas.toDataURL();
+
+        const workerData = {
+            name: name,
+            health: health,
+            ppe: ppe ? "착용확인" : "미확인",
+            feedback: feedback || "없음",
+            signature: signature
+        };
+
+        tbmData.workers.push(workerData);
+        updateWorkerStatus();
+        
+        alert(name + '님, 서명이 정상적으로 제출되었습니다.');
+        
+        // 입력 폼 초기화
+        document.getElementById('worker-name').value = "";
+        document.getElementById('worker-feedback').value = "";
+        document.getElementById('worker-ppe').checked = false;
+        clearCanvas();
+        closeMobileView();
+    }
+
+    function updateWorkerStatus() {
+        const list = document.getElementById('worker-list');
+        const grid = document.getElementById('print-signatures-grid');
+        const legalInfo = document.getElementById('print-legal-info');
+        
+        list.innerHTML = "";
+        grid.innerHTML = "";
+        
+        tbmData.workers.forEach((w, index) => {
+            // 현장 대시보드 리스트
+            const li = document.createElement('li');
+            li.className = 'worker-item';
+            li.innerHTML = `<span>${index+1}. ${w.name} (${w.health})</span> <span class="status-signed">✓ 서명완료</span>`;
+            list.appendChild(li);
+
+            // 출력용 서명 그리드
+            const div = document.createElement('div');
+            div.style.border = "1px solid #eee";
+            div.style.padding = "10px";
+            div.style.textAlign = "center";
+            div.innerHTML = `
+                <div style="font-size:12px; font-weight:bold; margin-bottom:5px;">${w.name}</div>
+                <img src="${w.signature}" style="max-width:100%; height:60px; border:1px solid #f0f0f0;">
+                <div style="font-size:10px; color:#666; margin-top:5px;">${w.health} / PPE:${w.ppe}</div>
+            `;
+            grid.appendChild(div);
+        });
+
+        // 대시보드 카운팅
+        document.getElementById('dash-total').innerText = tbmData.workers.length + "명";
+        document.getElementById('dash-signed').innerText = tbmData.workers.length + "명";
+
+        // 법적 특이사항 요약
+        const issues = tbmData.workers.filter(w => w.health !== "이상 없음" || w.feedback !== "없음");
+        if (issues.length > 0) {
+            let html = "<strong>⚠️ 주요 특이사항 및 건의사항:</strong><br>";
+            issues.forEach(w => {
+                html += `- ${w.name}: ${w.health === "이상 없음" ? "" : "["+w.health+"]"} ${w.feedback === "없음" ? "" : w.feedback}<br>`;
+            });
+            legalInfo.innerHTML = html;
+        } else {
+            legalInfo.innerHTML = "특이사항 없음 (모든 근로자 건강상태 양호 및 보호구 착용 확인됨)";
+        }
+    }
+
+    // 회사 정보 설정
+    function openSettingsModal() {
+        document.getElementById('settingsModal').classList.add('active');
+        document.getElementById('company-name').value = companyInfo.name || "";
+        document.getElementById('company-address').value = companyInfo.address || "";
+        document.getElementById('company-phone').value = companyInfo.phone || "";
+    }
+
+    function closeSettingsModal() {
+        document.getElementById('settingsModal').classList.remove('active');
+    }
+
+    function previewLogo() {
+        const file = document.getElementById('company-logo').files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const previewArea = document.getElementById('logo-preview-area');
+                previewArea.innerHTML = `<img src="${e.target.result}" class="logo-preview" alt="로고 미리보기">`;
+                companyInfo.logo = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function saveCompanyInfo() {
+        companyInfo.name = document.getElementById('company-name').value;
+        companyInfo.address = document.getElementById('company-address').value;
+        companyInfo.phone = document.getElementById('company-phone').value;
+        
+        if (!companyInfo.name) {
+            alert('회사명을 입력해주세요.');
+            return;
+        }
+        
+        alert('회사 정보가 저장되었습니다.');
+        closeSettingsModal();
+    }
+
+    // 비밀번호 확인 함수
+    function confirmReset() {
+        document.getElementById('passwordModal').classList.add('active');
+        document.getElementById('admin-password').focus();
+    }
+
+    function closePasswordModal() {
+        document.getElementById('passwordModal').classList.remove('active');
+        document.getElementById('admin-password').value = "";
+    }
+
+    function verifyPassword() {
+        const password = document.getElementById('admin-password').value;
+        if (password === ADMIN_PASSWORD) {
+            closePasswordModal();
+            if (confirm('모든 데이터를 초기화하고 새로운 TBM을 시작하시겠습니까?')) {
+                location.reload();
+            }
+        } else {
+            alert('❌ 비밀번호가 일치하지 않습니다.');
+            document.getElementById('admin-password').value = "";
+            document.getElementById('admin-password').focus();
+        }
+    }
+
+    // 카카오톡 텍스트 공유 (안정적)
+    function shareTextToKakao() {
+        if (tbmData.workers.length === 0) {
+            alert('서명한 근로자가 없어서 공유할 수 없습니다.');
+            return;
+        }
+
+        let shareText = "🛡️ 스마트 TBM 안전보건 기록\n";
+        shareText += "═".repeat(40) + "\n\n";
+        
+        if (companyInfo.name) {
+            shareText += `🏢 회사: ${companyInfo.name}\n`;
+            if (companyInfo.address) shareText += `📍 주소: ${companyInfo.address}\n`;
+            if (companyInfo.phone) shareText += `📞 전화: ${companyInfo.phone}\n`;
+            shareText += "\n";
+        }
+        
+        shareText += "📋 기본 정보\n";
+        shareText += `• 실시 일시: ${tbmData.startTime}\n`;
+        shareText += `• TBM 리더: ${tbmData.leader}\n`;
+        shareText += `• 작업 장소: ${tbmData.location}\n`;
+        shareText += `• 작업 유형: ${tbmData.worktype}\n\n`;
+        
+        shareText += "⚠️ 중점 위험요인\n";
+        shareText += `${tbmData.hazards}\n\n`;
+        
+        shareText += "✅ 안전보건 대책\n";
+        shareText += `${tbmData.measures}\n\n`;
+        
+        shareText += "👷 참석 근로자 명단 (" + tbmData.workers.length + "명)\n";
+        tbmData.workers.forEach((w, idx) => {
+            shareText += `${idx+1}. ${w.name} (${w.health}, PPE:${w.ppe})\n`;
+        });
+        
+        const issues = tbmData.workers.filter(w => w.health !== "이상 없음" || w.feedback !== "없음");
+        if (issues.length > 0) {
+            shareText += "\n⚠️ 특이사항:\n";
+            issues.forEach(w => {
+                if (w.health !== "이상 없음") shareText += `• ${w.name}: ${w.health}\n`;
+                if (w.feedback !== "없음") shareText += `• ${w.name} 의견: ${w.feedback}\n`;
+            });
+        }
+
+        shareText += "\n" + "═".repeat(40) + "\n";
+        shareText += "산업안전보건법 준수 · 스마트TBM v2.0\n";
+
+        // 클립보드에 복사
+        const textarea = document.createElement('textarea');
+        textarea.value = shareText;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+
+        // 카카오톡 앱 또는 웹으로 열기
+        if (navigator.share) {
+            navigator.share({
+                title: 'TBM 안전보건 기록',
+                text: shareText
+            }).catch(err => {
+                if (err.name !== 'AbortError') {
+                    alert('✅ 기록이 클립보드에 복사되었습니다.\n카카오톡을 열어서 붙여넣기(Ctrl+V)하세요.');
+                }
+            });
+        } else {
+            alert('✅ 기록이 클립보드에 복사되었습니다.\n카카오톡을 열어서 붙여넣기(Ctrl+V)하세요.');
+        }
+    }
+
+    // 이미지로 저장 (안정적)
+    async function saveAsImage() {
+        if (tbmData.workers.length === 0) {
+            alert('서명한 근로자가 없어서 저장할 수 없습니다.');
+            return;
+        }
+
+        document.getElementById('loading-overlay').classList.add('active');
+
+        try {
+            // 렌더링 영역 생성
+            const renderArea = document.getElementById('hidden-render-area');
+            renderArea.innerHTML = createImageContent();
+            renderArea.style.display = 'block';
+
+            // 충분한 렌더링 시간 확보
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            // html2canvas를 사용하여 이미지 생성
+            const canvas = await html2canvas(renderArea, {
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                backgroundColor: '#ffffff',
+                allowTaint: true
+            });
+
+            renderArea.style.display = 'none';
+
+            // 이미지를 blob으로 변환
+            canvas.toBlob(function(blob) {
+                const fileName = 'TBM기록_' + new Date().toISOString().split('T')[0] + '.png';
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+
+                document.getElementById('loading-overlay').classList.remove('active');
+                alert('✅ 기록이 이미지(PNG)로 저장되었습니다.\n갤러리에서 확인하고 카톡으로 공유하세요.');
+            }, 'image/png');
+        } catch (error) {
+            document.getElementById('loading-overlay').classList.remove('active');
+            alert('❌ 이미지 저장 중 오류가 발생했습니다: ' + error);
+        }
+    }
+
+    function createImageContent() {
+        const issues = tbmData.workers.filter(w => w.health !== "이상 없음" || w.feedback !== "없음");
+        let legalHtml = issues.length > 0 
+            ? "<strong style='color:#d32f2f;'>⚠️ 특이사항:</strong><br>" + issues.map(w => 
+                (w.health !== "이상 없음" ? `• ${w.name}: ${w.health}<br>` : "") +
+                (w.feedback !== "없음" ? `• ${w.name} 의견: ${w.feedback}<br>` : "")
+            ).join("")
+            : "✅ 특이사항 없음";
+
+        let signaturesHtml = '<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">';
+        tbmData.workers.forEach((w, idx) => {
+            signaturesHtml += `
+                <div style="border:2px solid #999; padding:8px; text-align:center; background:#fafafa; font-size:11px;">
+                    <div style="font-weight:bold; margin-bottom:5px;">${idx+1}. ${w.name}</div>
+                    <img src="${w.signature}" style="max-width:100%; height:50px; border:1px solid #ccc;">
+                    <div style="margin-top:3px; color:#666;">${w.health}</div>
+                </div>
+            `;
+        });
+        signaturesHtml += '</div>';
+
+        // 회사 로고 및 정보 추가
+        let companyHeaderHtml = '';
+        if (companyInfo.name) {
+            companyHeaderHtml = `
+                <div style="display:flex; align-items:center; justify-content:center; margin-bottom:20px; padding-bottom:15px; border-bottom:3px solid #00796b;">
+                    ${companyInfo.logo ? `<img src="${companyInfo.logo}" style="max-width:80px; height:auto; margin-right:15px;">` : ''}
+                    <div style="text-align:center;">
+                        <h2 style="margin:0; font-size:18px; color:#00796b; font-weight:900;">${companyInfo.name}</h2>
+                        ${companyInfo.address ? `<p style="margin:3px 0; font-size:11px; color:#666;">${companyInfo.address}</p>` : ''}
+                        ${companyInfo.phone ? `<p style="margin:3px 0; font-size:11px; color:#666;">${companyInfo.phone}</p>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        return `
+            <div style="width:800px; padding:30px; background:white; font-family:'Malgun Gothic', sans-serif; font-size:12px; line-height:1.6; color:#333;">
+                ${companyHeaderHtml}
+                
+                <div style="text-align:center; margin-bottom:20px; border-bottom:3px solid #00796b; padding-bottom:15px;">
+                    <h1 style="font-size:20px; color:#00796b; margin:0 0 5px 0; font-weight:900;">🛡️ TBM 안전보건 기록부</h1>
+                    <p style="font-size:11px; color:#666; margin:0;">산업안전보건법 준수 · 스마트 TBM v2.0</p>
+                </div>
+
+                <table style="width:100%; border-collapse:collapse; margin-bottom:15px;">
+                    <tr>
+                        <th style="border:1px solid #999; padding:8px; background:#e0f2f1; font-weight:bold; width:35%;">실시 일시</th>
+                        <td style="border:1px solid #999; padding:8px; background:#ffffff;">${tbmData.startTime}</td>
+                    </tr>
+                    <tr>
+                        <th style="border:1px solid #999; padding:8px; background:#e0f2f1; font-weight:bold;">TBM 리더</th>
+                        <td style="border:1px solid #999; padding:8px; background:#ffffff;">${tbmData.leader}</td>
+                    </tr>
+                    <tr>
+                        <th style="border:1px solid #999; padding:8px; background:#e0f2f1; font-weight:bold;">작업 장소</th>
+                        <td style="border:1px solid #999; padding:8px; background:#ffffff;">${tbmData.location}</td>
+                    </tr>
+                    <tr>
+                        <th style="border:1px solid #999; padding:8px; background:#e0f2f1; font-weight:bold;">작업 유형</th>
+                        <td style="border:1px solid #999; padding:8px; background:#ffffff;">${tbmData.worktype}</td>
+                    </tr>
+                </table>
+
+                <div style="background:#ffebee; padding:10px; border-left:4px solid #d32f2f; margin-bottom:15px;">
+                    <strong style="color:#d32f2f;">⚠️ 중점 위험요인</strong><br>
+                    ${tbmData.hazards}
+                </div>
+
+                <div style="background:#e3f2fd; padding:10px; border-left:4px solid #1565c0; margin-bottom:15px;">
+                    <strong style="color:#1565c0;">✅ 안전보건 대책</strong><br>
+                    ${tbmData.measures}
+                </div>
+
+                <div style="font-weight:bold; margin-bottom:10px; padding-bottom:8px; border-bottom:2px solid #00796b;">
+                    👷 참석 근로자 및 서명 (${tbmData.workers.length}명)
+                </div>
+                ${signaturesHtml}
+
+                <div style="background:#fff8e1; padding:10px; border:2px solid #ffe082; border-radius:5px; margin-top:15px; font-size:10px;">
+                    <strong style="color:#f57c00;">산업안전보건법 필수 항목</strong><br>
+                    ${legalHtml}
+                </div>
+
+                <div style="margin-top:15px; padding:10px; background:#f5f5f5; border-radius:5px; font-size:9px; color:#666; text-align:center;">
+                    본 기록부는 산업안전보건법 제23조(안전보건교육)에 따른 근로자 안전교육 증빙 자료입니다.
+                </div>
+            </div>
+        `;
+    }
+
+    // 모달 외부 클릭 시 닫기
+    document.getElementById('passwordModal').addEventListener('click', (e) => {
+        if (e.target.id === 'passwordModal') closePasswordModal();
+    });
+    document.getElementById('settingsModal').addEventListener('click', (e) => {
+        if (e.target.id === 'settingsModal') closeSettingsModal();
+    });
+</script>
+
+</body>
+</html>
