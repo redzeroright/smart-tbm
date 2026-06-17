@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>스마트 TBM 안전보건 시스템 v2.0</title>
+    <title>스마트 TBM 안전보건 시스템 v3.0 - 법적 증빙 강화</title>
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
@@ -12,6 +12,7 @@
             --secondary-color: #004d40;
             --accent-color: #ffc107;
             --danger-color: #d32f2f;
+            --warning-color: #f57c00;
             --bg-color: #f0f4f8;
             --card-bg: #ffffff;
             --text-color: #333;
@@ -82,13 +83,20 @@
         .legal-group { background: #fff8e1; padding: 15px; border-radius: 8px; border: 1px solid #ffe082; margin-top: 15px; }
         .legal-tag { display: inline-block; background: #ff8f00; color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-bottom: 5px; font-weight: 800; }
 
-        /* 모바일 웹뷰 전용 스타일 (QR 접속 시) */
+        /* 환경설정 모달 탭 */
+        .settings-tabs { display: flex; gap: 5px; margin-bottom: 15px; border-bottom: 2px solid #e1e8ed; }
+        .settings-tab { padding: 10px 15px; background: none; border: none; color: #666; font-weight: 700; cursor: pointer; border-bottom: 3px solid transparent; transition: 0.2s; font-size: 13px; }
+        .settings-tab.active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
+        .settings-tab-content { display: none; }
+        .settings-tab-content.active { display: block; }
+
+        /* 모바일 웹뷰 전용 스타일 */
         #mobile-view { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 1000; overflow-y: auto; padding: 20px; box-sizing: border-box; }
 
         /* 비밀번호 모달 */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center; }
         .modal.active { display: flex; }
-        .modal-content { background: white; padding: 30px; border-radius: 12px; max-width: 400px; width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,0.2); max-height: 80vh; overflow-y: auto; }
+        .modal-content { background: white; padding: 30px; border-radius: 12px; max-width: 500px; width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,0.2); max-height: 80vh; overflow-y: auto; }
         .modal-content h2 { margin-top: 0; color: var(--primary-color); }
         .modal-content input { margin-bottom: 15px; }
         .modal-content button { margin-top: 15px; }
@@ -106,6 +114,9 @@
 
         /* 숨겨진 이미지 렌더링 영역 */
         #hidden-render-area { position: fixed; left: -9999px; top: -9999px; width: 800px; background: white; }
+
+        .emergency-box { background: #ffebee; border-left: 5px solid var(--danger-color); padding: 12px; margin: 10px 0; border-radius: 4px; font-size: 13px; }
+        .emergency-box strong { color: var(--danger-color); }
 
         @media print {
             body { background: white; }
@@ -126,7 +137,7 @@
 <div class="container">
     <header class="no-print">
         <h1>스마트 TBM 안전보건 시스템</h1>
-        <p>산업안전보건법 준수 · 현장 중심 데이터 연동 v2.0</p>
+        <p>산업안전보건법 준수 · 법적 증빙 강화 v3.0</p>
         
         <div class="nav-tabs">
             <button id="btn-tab1" class="tab-button active-tab" onclick="changePage('page-step1', 'btn-tab1')">1. 세션 개설</button>
@@ -172,6 +183,7 @@
                 <textarea id="input-measures" placeholder="안전대책을 입력하세요"></textarea>
                 
                 <button type="button" onclick="createTbm()">TBM 개설 및 데이터 확정</button>
+                <button type="button" class="btn-settings" onclick="openSettingsModal()">⚙️ 회사 및 현장 정보 설정</button>
             </div>
         </div>
 
@@ -201,7 +213,6 @@
             <div class="card">
                 <div class="card-title">👥 서명 현황 실시간 카운팅</div>
                 <ul id="worker-list" class="worker-list">
-                    <!-- 서명한 근로자 목록이 여기에 추가됨 -->
                     <li class="worker-item" style="color:#999; justify-content:center;">아직 서명한 근로자가 없습니다.</li>
                 </ul>
             </div>
@@ -224,23 +235,21 @@
 
                 <div class="card-title">👷 참석 근로자 및 서명</div>
                 <div id="print-signatures-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <!-- 서명 이미지들이 여기에 출력됨 -->
                 </div>
                 
                 <div class="legal-group">
-                    <span class="legal-tag">산업안전보건법 기준 필수 항목</span>
+                    <span class="legal-tag">산업안전보건법 필수 항목</span>
                     <div id="print-legal-info" style="font-size: 13px;">
-                        <!-- 법적 필수 항목 요약 -->
                     </div>
                 </div>
 
                 <div class="no-print" style="margin-top:20px;">
                     <div class="btn-group">
-                        <button type="button" class="btn-print" onclick="window.print()">🖨️ 고용노동부 제출용 출력</button>
+                        <button type="button" class="btn-print" onclick="window.print()">🖨️고용노동부제출용 출력</button>
                         <button type="button" class="btn-kakao" onclick="shareTextToKakao()">💬 카톡 보내기</button>
                     </div>
                     <button type="button" class="btn-image" onclick="saveAsImage()">🖼️ 이미지 저장</button>
-                    <button type="button" class="btn-settings" onclick="openSettingsModal()">⚙️ 회사 정보 설정</button>
+                    <button type="button" class="btn-settings" onclick="openSettingsModal()">⚙️ 회사 및 현장 정보 설정</button>
                     <button type="button" class="btn-reset" onclick="confirmReset()">🔄 새로운 TBM 시작(관리자)</button>
                 </div>
             </div>
@@ -248,7 +257,7 @@
     </div>
 </div>
 
-<!-- 모바일 서명 웹뷰 (가상 모바일 화면) -->
+<!-- 모바일 서명 웹뷰 -->
 <div id="mobile-view">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
         <h2 style="margin:0; font-size:18px; color:var(--primary-color);">스마트 TBM 서명</h2>
@@ -307,26 +316,84 @@
     </div>
 </div>
 
-<!-- 회사 정보 설정 모달 -->
+<!-- 회사 및 현장 정보 설정 모달 (고도화 v3.0) -->
 <div id="settingsModal" class="modal">
     <div class="modal-content">
-        <h2>⚙️ 회사 정보 설정</h2>
-        <p style="color:#666; margin-bottom:15px;">출력물 및 이미지에 표시될 회사 정보를 입력하세요.</p>
+        <h2>⚙️ 회사 및 현장 정보 설정</h2>
+        <p style="color:#666; margin-bottom:15px; font-size:13px;">산업안전보건법 준수 및 비상 대응을 위한 정보를 입력하세요.</p>
         
-        <label>회사명 <span style="color:red">*</span></label>
-        <input type="text" id="company-name" placeholder="예: 한국 안전 산업 주식회사">
-        
-        <label>회사 로고 이미지 업로드</label>
-        <input type="file" id="company-logo" accept="image/*" onchange="previewLogo()">
-        <div id="logo-preview-area"></div>
-        
-        <label>회사 주소 (선택사항)</label>
-        <input type="text" id="company-address" placeholder="예: 서울시 강남구 테헤란로 123">
-        
-        <label>회사 전화 (선택사항)</label>
-        <input type="text" id="company-phone" placeholder="예: 02-1234-5678">
-        
-        <div class="modal-btn-group">
+        <!-- 탭 네비게이션 -->
+        <div class="settings-tabs">
+            <button class="settings-tab active" onclick="switchSettingsTab('tab-company')">🏢 회사 정보</button>
+            <button class="settings-tab" onclick="switchSettingsTab('tab-legal')">📋 법적 정보</button>
+            <button class="settings-tab" onclick="switchSettingsTab('tab-emergency')">🚨 비상 대응</button>
+            <button class="settings-tab" onclick="switchSettingsTab('tab-safety')">🛡️ 안전 문화</button>
+        </div>
+
+        <!-- 탭 1: 회사 정보 -->
+        <div id="tab-company" class="settings-tab-content active">
+            <label>회사명 <span style="color:red">*</span></label>
+            <input type="text" id="company-name" placeholder="예: 한국 안전 산업 주식회사">
+            
+            <label>회사 로고 이미지 업로드</label>
+            <input type="file" id="company-logo" accept="image/*" onchange="previewLogo()">
+            <div id="logo-preview-area"></div>
+            
+            <label>회사 주소</label>
+            <input type="text" id="company-address" placeholder="예: 서울시 강남구 테헤란로 123">
+            
+            <label>회사 전화</label>
+            <input type="text" id="company-phone" placeholder="예: 02-1234-5678">
+        </div>
+
+        <!-- 탭 2: 법적 정보 (산업안전보건법 기준) -->
+        <div id="tab-legal" class="settings-tab-content">
+            <label>사업자 등록번호</label>
+            <input type="text" id="business-number" placeholder="예: 123-45-67890">
+            
+            <label>안전보건관리책임자 성명 <span style="color:red">*</span></label>
+            <input type="text" id="safety-manager" placeholder="예: 이순신 부장">
+            
+            <label>부서/팀명</label>
+            <input type="text" id="department" placeholder="예: 생산팀 / A프로젝트">
+            
+            <label>프로젝트/공사명 (해당 시)</label>
+            <input type="text" id="project-name" placeholder="예: 신공장 확장 공사">
+            
+            <label>문서 번호/개정 번호 (ISO 관리용)</label>
+            <input type="text" id="document-number" placeholder="예: TBM-2024-001">
+        </div>
+
+        <!-- 탭 3: 비상 대응 -->
+        <div id="tab-emergency" class="settings-tab-content">
+            <div class="emergency-box">
+                <strong>⚠️ 비상 상황 시 즉시 연락할 정보입니다.</strong>
+            </div>
+            
+            <label>인근 응급실 (병원명 및 전화)</label>
+            <input type="text" id="emergency-hospital" placeholder="예: 서울대병원 응급실 02-2072-2114">
+            
+            <label>소방서 (또는 119)</label>
+            <input type="text" id="emergency-fire" placeholder="예: 강남소방서 02-3444-0119">
+            
+            <label>사내 방재센터/안전팀 긴급 연락처</label>
+            <input type="text" id="emergency-internal" placeholder="예: 안전팀 김철수 010-1234-5678">
+            
+            <label>비상 집결지 안내</label>
+            <textarea id="emergency-assembly" placeholder="예: 공장 정문 좌측 광장 (주차장 인접)"></textarea>
+        </div>
+
+        <!-- 탭 4: 안전 문화 -->
+        <div id="tab-safety" class="settings-tab-content">
+            <label>회사 안전 슬로건 (무재해 구호)</label>
+            <input type="text" id="safety-slogan" placeholder="예: 오늘도 안전하게! 모두가 함께 무재해!">
+            
+            <label>이달의 중점 안전 목표</label>
+            <textarea id="safety-goal" placeholder="예: 개인보호구 100% 착용 및 불안전한 행동 ZERO"></textarea>
+        </div>
+
+        <!-- 저장/취소 버튼 -->
+        <div class="modal-btn-group" style="margin-top:20px;">
             <button type="button" style="background:#2e7d32; margin-top:0;" onclick="saveCompanyInfo()">✅ 저장</button>
             <button type="button" style="background:#546e7a; margin-top:0;" onclick="closeSettingsModal()">❌ 취소</button>
         </div>
@@ -339,7 +406,7 @@
     <p style="margin-top:20px; font-size:16px; color:var(--primary-color); font-weight:bold;">처리 중...</p>
 </div>
 
-<!-- 숨겨진 렌더링 영역 (이미지 생성용) -->
+<!-- 숨겨진 렌더링 영역 -->
 <div id="hidden-render-area"></div>
 
 <script>
@@ -389,10 +456,21 @@
         name: "",
         logo: null,
         address: "",
-        phone: ""
+        phone: "",
+        businessNumber: "",
+        safetyManager: "",
+        department: "",
+        projectName: "",
+        documentNumber: "",
+        emergencyHospital: "",
+        emergencyFire: "",
+        emergencyInternal: "",
+        emergencyAssembly: "",
+        safetySlogan: "",
+        safetyGoal: ""
     };
 
-    // 시간 업데이트 함수
+    // 시간 업데이트
     function updateSystemTime() {
         const now = new Date();
         const timeStr = now.toLocaleString('ko-KR', { 
@@ -450,10 +528,8 @@
         tbmData.measures = document.getElementById('input-measures').value;
         tbmData.startTime = new Date().toLocaleString('ko-KR');
 
-        // 데이터 동기화 (Mirroring)
         syncData();
         
-        // QR코드 생성
         const qrDiv = document.getElementById('qrcode');
         qrDiv.innerHTML = "";
         new QRCode(qrDiv, {
@@ -467,7 +543,6 @@
     }
 
     function syncData() {
-        // 출력부 데이터 동기화
         document.getElementById('print-date').innerText = tbmData.startTime;
         document.getElementById('print-leader').innerText = tbmData.leader;
         document.getElementById('print-location').innerText = tbmData.location;
@@ -476,7 +551,6 @@
         document.getElementById('print-measures').innerText = tbmData.measures;
         document.getElementById('print-duration').innerText = tbmData.duration + "분 내외";
 
-        // 모바일 뷰 데이터 동기화
         document.getElementById('mobile-tbm-time').innerText = "⏱️ 실시 시간: " + tbmData.startTime;
         document.getElementById('mobile-location').innerText = tbmData.location;
         document.getElementById('mobile-worktype').innerText = tbmData.worktype;
@@ -484,7 +558,7 @@
         document.getElementById('mobile-measures').innerText = tbmData.measures;
     }
 
-    // 서명 패드 관련 로직
+    // 서명 패드
     const canvas = document.getElementById('signature-pad');
     const ctx = canvas.getContext('2d');
     let isDrawing = false;
@@ -541,7 +615,6 @@
         const name = document.getElementById('worker-name').value;
         if (!name) { alert('성명을 입력해주세요.'); return; }
         
-        // 서명 여부 검증 (핵심 추가 기능)
         if (isCanvasEmpty(canvas)) {
             alert('⚠️ 서명을 꼭 해주세요.\n\n서명란에 손가락으로 서명을 그려주세요.');
             return;
@@ -565,7 +638,6 @@
         
         alert(name + '님, 서명이 정상적으로 제출되었습니다.');
         
-        // 입력 폼 초기화
         document.getElementById('worker-name').value = "";
         document.getElementById('worker-feedback').value = "";
         document.getElementById('worker-ppe').checked = false;
@@ -582,13 +654,11 @@
         grid.innerHTML = "";
         
         tbmData.workers.forEach((w, index) => {
-            // 현장 대시보드 리스트
             const li = document.createElement('li');
             li.className = 'worker-item';
             li.innerHTML = `<span>${index+1}. ${w.name} (${w.health})</span> <span class="status-signed">✓ 서명완료</span>`;
             list.appendChild(li);
 
-            // 출력용 서명 그리드
             const div = document.createElement('div');
             div.style.border = "1px solid #eee";
             div.style.padding = "10px";
@@ -601,11 +671,9 @@
             grid.appendChild(div);
         });
 
-        // 대시보드 카운팅
         document.getElementById('dash-total').innerText = tbmData.workers.length + "명";
         document.getElementById('dash-signed').innerText = tbmData.workers.length + "명";
 
-        // 법적 특이사항 요약
         const issues = tbmData.workers.filter(w => w.health !== "이상 없음" || w.feedback !== "없음");
         if (issues.length > 0) {
             let html = "<strong>⚠️ 주요 특이사항 및 건의사항:</strong><br>";
@@ -614,16 +682,34 @@
             });
             legalInfo.innerHTML = html;
         } else {
-            legalInfo.innerHTML = "특이사항 없음 (모든 근로자 건강상태 양호 및 보호구 착용 확인됨)";
+            legalInfo.innerHTML = "✅ 특이사항 없음 (모든 근로자 건강상태 양호 및 보호구 착용 확인됨)";
         }
     }
 
-    // 회사 정보 설정
+    // 환경설정 탭 전환
+    function switchSettingsTab(tabName) {
+        document.querySelectorAll('.settings-tab-content').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.settings-tab').forEach(tab => tab.classList.remove('active'));
+        document.getElementById(tabName).classList.add('active');
+        event.target.classList.add('active');
+    }
+
     function openSettingsModal() {
         document.getElementById('settingsModal').classList.add('active');
         document.getElementById('company-name').value = companyInfo.name || "";
         document.getElementById('company-address').value = companyInfo.address || "";
         document.getElementById('company-phone').value = companyInfo.phone || "";
+        document.getElementById('business-number').value = companyInfo.businessNumber || "";
+        document.getElementById('safety-manager').value = companyInfo.safetyManager || "";
+        document.getElementById('department').value = companyInfo.department || "";
+        document.getElementById('project-name').value = companyInfo.projectName || "";
+        document.getElementById('document-number').value = companyInfo.documentNumber || "";
+        document.getElementById('emergency-hospital').value = companyInfo.emergencyHospital || "";
+        document.getElementById('emergency-fire').value = companyInfo.emergencyFire || "";
+        document.getElementById('emergency-internal').value = companyInfo.emergencyInternal || "";
+        document.getElementById('emergency-assembly').value = companyInfo.emergencyAssembly || "";
+        document.getElementById('safety-slogan').value = companyInfo.safetySlogan || "";
+        document.getElementById('safety-goal').value = companyInfo.safetyGoal || "";
     }
 
     function closeSettingsModal() {
@@ -647,17 +733,32 @@
         companyInfo.name = document.getElementById('company-name').value;
         companyInfo.address = document.getElementById('company-address').value;
         companyInfo.phone = document.getElementById('company-phone').value;
+        companyInfo.businessNumber = document.getElementById('business-number').value;
+        companyInfo.safetyManager = document.getElementById('safety-manager').value;
+        companyInfo.department = document.getElementById('department').value;
+        companyInfo.projectName = document.getElementById('project-name').value;
+        companyInfo.documentNumber = document.getElementById('document-number').value;
+        companyInfo.emergencyHospital = document.getElementById('emergency-hospital').value;
+        companyInfo.emergencyFire = document.getElementById('emergency-fire').value;
+        companyInfo.emergencyInternal = document.getElementById('emergency-internal').value;
+        companyInfo.emergencyAssembly = document.getElementById('emergency-assembly').value;
+        companyInfo.safetySlogan = document.getElementById('safety-slogan').value;
+        companyInfo.safetyGoal = document.getElementById('safety-goal').value;
         
         if (!companyInfo.name) {
             alert('회사명을 입력해주세요.');
             return;
         }
         
-        alert('회사 정보가 저장되었습니다.');
+        if (!companyInfo.safetyManager) {
+            alert('안전보건관리책임자 성명을 입력해주세요.');
+            return;
+        }
+        
+        alert('회사 및 현장 정보가 저장되었습니다.');
         closeSettingsModal();
     }
 
-    // 비밀번호 확인 함수
     function confirmReset() {
         document.getElementById('passwordModal').classList.add('active');
         document.getElementById('admin-password').focus();
@@ -682,7 +783,7 @@
         }
     }
 
-    // 카카오톡 텍스트 공유 (안정적)
+    // 카카오톡 텍스트 공유
     function shareTextToKakao() {
         if (tbmData.workers.length === 0) {
             alert('서명한 근로자가 없어서 공유할 수 없습니다.');
@@ -690,12 +791,15 @@
         }
 
         let shareText = "🛡️ 스마트 TBM 안전보건 기록\n";
-        shareText += "═".repeat(40) + "\n\n";
+        shareText += "═".repeat(50) + "\n\n";
         
         if (companyInfo.name) {
             shareText += `🏢 회사: ${companyInfo.name}\n`;
+            if (companyInfo.businessNumber) shareText += `📊 사업자번호: ${companyInfo.businessNumber}\n`;
+            if (companyInfo.safetyManager) shareText += `👔 안전보건책임자: ${companyInfo.safetyManager}\n`;
             if (companyInfo.address) shareText += `📍 주소: ${companyInfo.address}\n`;
             if (companyInfo.phone) shareText += `📞 전화: ${companyInfo.phone}\n`;
+            if (companyInfo.safetySlogan) shareText += `🎯 슬로건: ${companyInfo.safetySlogan}\n`;
             shareText += "\n";
         }
         
@@ -703,7 +807,10 @@
         shareText += `• 실시 일시: ${tbmData.startTime}\n`;
         shareText += `• TBM 리더: ${tbmData.leader}\n`;
         shareText += `• 작업 장소: ${tbmData.location}\n`;
-        shareText += `• 작업 유형: ${tbmData.worktype}\n\n`;
+        shareText += `• 작업 유형: ${tbmData.worktype}\n`;
+        if (companyInfo.department) shareText += `• 부서/팀: ${companyInfo.department}\n`;
+        if (companyInfo.projectName) shareText += `• 프로젝트: ${companyInfo.projectName}\n`;
+        shareText += "\n";
         
         shareText += "⚠️ 중점 위험요인\n";
         shareText += `${tbmData.hazards}\n\n`;
@@ -725,10 +832,16 @@
             });
         }
 
-        shareText += "\n" + "═".repeat(40) + "\n";
-        shareText += "산업안전보건법 준수 · 스마트TBM v2.0\n";
+        if (companyInfo.emergencyHospital || companyInfo.emergencyFire || companyInfo.emergencyInternal) {
+            shareText += "\n🚨 비상 연락처\n";
+            if (companyInfo.emergencyHospital) shareText += `• 응급실: ${companyInfo.emergencyHospital}\n`;
+            if (companyInfo.emergencyFire) shareText += `• 소방서: ${companyInfo.emergencyFire}\n`;
+            if (companyInfo.emergencyInternal) shareText += `• 사내 긴급: ${companyInfo.emergencyInternal}\n`;
+        }
 
-        // 클립보드에 복사
+        shareText += "\n" + "═".repeat(50) + "\n";
+        shareText += "산업안전보건법 준수 · 스마트TBM v3.0\n";
+
         const textarea = document.createElement('textarea');
         textarea.value = shareText;
         document.body.appendChild(textarea);
@@ -736,7 +849,6 @@
         document.execCommand('copy');
         document.body.removeChild(textarea);
 
-        // 카카오톡 앱 또는 웹으로 열기
         if (navigator.share) {
             navigator.share({
                 title: 'TBM 안전보건 기록',
@@ -751,7 +863,7 @@
         }
     }
 
-    // 이미지로 저장 (안정적)
+    // 이미지로 저장
     async function saveAsImage() {
         if (tbmData.workers.length === 0) {
             alert('서명한 근로자가 없어서 저장할 수 없습니다.');
@@ -761,15 +873,12 @@
         document.getElementById('loading-overlay').classList.add('active');
 
         try {
-            // 렌더링 영역 생성
             const renderArea = document.getElementById('hidden-render-area');
             renderArea.innerHTML = createImageContent();
             renderArea.style.display = 'block';
 
-            // 충분한 렌더링 시간 확보
             await new Promise(resolve => setTimeout(resolve, 1000));
 
-            // html2canvas를 사용하여 이미지 생성
             const canvas = await html2canvas(renderArea, {
                 scale: 2,
                 useCORS: true,
@@ -780,7 +889,6 @@
 
             renderArea.style.display = 'none';
 
-            // 이미지를 blob으로 변환
             canvas.toBlob(function(blob) {
                 const fileName = 'TBM기록_' + new Date().toISOString().split('T')[0] + '.png';
                 const url = URL.createObjectURL(blob);
@@ -822,7 +930,6 @@
         });
         signaturesHtml += '</div>';
 
-        // 회사 로고 및 정보 추가
         let companyHeaderHtml = '';
         if (companyInfo.name) {
             companyHeaderHtml = `
@@ -830,6 +937,7 @@
                     ${companyInfo.logo ? `<img src="${companyInfo.logo}" style="max-width:80px; height:auto; margin-right:15px;">` : ''}
                     <div style="text-align:center;">
                         <h2 style="margin:0; font-size:18px; color:#00796b; font-weight:900;">${companyInfo.name}</h2>
+                        ${companyInfo.businessNumber ? `<p style="margin:3px 0; font-size:10px; color:#666;">사업자번호: ${companyInfo.businessNumber}</p>` : ''}
                         ${companyInfo.address ? `<p style="margin:3px 0; font-size:11px; color:#666;">${companyInfo.address}</p>` : ''}
                         ${companyInfo.phone ? `<p style="margin:3px 0; font-size:11px; color:#666;">${companyInfo.phone}</p>` : ''}
                     </div>
@@ -837,13 +945,36 @@
             `;
         }
 
+        let safetyHeaderHtml = '';
+        if (companyInfo.safetySlogan) {
+            safetyHeaderHtml = `
+                <div style="background:#e3f2fd; padding:10px; text-align:center; margin-bottom:15px; border-radius:5px; border:2px solid #1976d2;">
+                    <strong style="font-size:14px; color:#1565c0;">🎯 ${companyInfo.safetySlogan}</strong>
+                </div>
+            `;
+        }
+
+        let emergencyHtml = '';
+        if (companyInfo.emergencyHospital || companyInfo.emergencyFire || companyInfo.emergencyInternal) {
+            emergencyHtml = `
+                <div style="background:#ffebee; padding:10px; margin-top:15px; border-radius:5px; border-left:5px solid #d32f2f;">
+                    <strong style="color:#d32f2f;">🚨 비상 연락처</strong><br>
+                    ${companyInfo.emergencyHospital ? `응급실: ${companyInfo.emergencyHospital}<br>` : ''}
+                    ${companyInfo.emergencyFire ? `소방서: ${companyInfo.emergencyFire}<br>` : ''}
+                    ${companyInfo.emergencyInternal ? `사내 긴급: ${companyInfo.emergencyInternal}<br>` : ''}
+                    ${companyInfo.emergencyAssembly ? `집결지: ${companyInfo.emergencyAssembly}` : ''}
+                </div>
+            `;
+        }
+
         return `
             <div style="width:800px; padding:30px; background:white; font-family:'Malgun Gothic', sans-serif; font-size:12px; line-height:1.6; color:#333;">
                 ${companyHeaderHtml}
+                ${safetyHeaderHtml}
                 
                 <div style="text-align:center; margin-bottom:20px; border-bottom:3px solid #00796b; padding-bottom:15px;">
                     <h1 style="font-size:20px; color:#00796b; margin:0 0 5px 0; font-weight:900;">🛡️ TBM 안전보건 기록부</h1>
-                    <p style="font-size:11px; color:#666; margin:0;">산업안전보건법 준수 · 스마트 TBM v2.0</p>
+                    <p style="font-size:11px; color:#666; margin:0;">산업안전보건법 준수 · 스마트 TBM v3.0</p>
                 </div>
 
                 <table style="width:100%; border-collapse:collapse; margin-bottom:15px;">
@@ -855,6 +986,10 @@
                         <th style="border:1px solid #999; padding:8px; background:#e0f2f1; font-weight:bold;">TBM 리더</th>
                         <td style="border:1px solid #999; padding:8px; background:#ffffff;">${tbmData.leader}</td>
                     </tr>
+                    ${companyInfo.safetyManager ? `<tr>
+                        <th style="border:1px solid #999; padding:8px; background:#e0f2f1; font-weight:bold;">안전보건책임자</th>
+                        <td style="border:1px solid #999; padding:8px; background:#ffffff;">${companyInfo.safetyManager}</td>
+                    </tr>` : ''}
                     <tr>
                         <th style="border:1px solid #999; padding:8px; background:#e0f2f1; font-weight:bold;">작업 장소</th>
                         <td style="border:1px solid #999; padding:8px; background:#ffffff;">${tbmData.location}</td>
@@ -863,6 +998,14 @@
                         <th style="border:1px solid #999; padding:8px; background:#e0f2f1; font-weight:bold;">작업 유형</th>
                         <td style="border:1px solid #999; padding:8px; background:#ffffff;">${tbmData.worktype}</td>
                     </tr>
+                    ${companyInfo.department ? `<tr>
+                        <th style="border:1px solid #999; padding:8px; background:#e0f2f1; font-weight:bold;">부서/팀</th>
+                        <td style="border:1px solid #999; padding:8px; background:#ffffff;">${companyInfo.department}</td>
+                    </tr>` : ''}
+                    ${companyInfo.projectName ? `<tr>
+                        <th style="border:1px solid #999; padding:8px; background:#e0f2f1; font-weight:bold;">프로젝트</th>
+                        <td style="border:1px solid #999; padding:8px; background:#ffffff;">${companyInfo.projectName}</td>
+                    </tr>` : ''}
                 </table>
 
                 <div style="background:#ffebee; padding:10px; border-left:4px solid #d32f2f; margin-bottom:15px;">
@@ -875,6 +1018,13 @@
                     ${tbmData.measures}
                 </div>
 
+                ${companyInfo.safetyGoal ? `
+                <div style="background:#f3e5f5; padding:10px; border-left:4px solid #7b1fa2; margin-bottom:15px;">
+                    <strong style="color:#7b1fa2;">🎯 이달의 중점 안전 목표</strong><br>
+                    ${companyInfo.safetyGoal}
+                </div>
+                ` : ''}
+
                 <div style="font-weight:bold; margin-bottom:10px; padding-bottom:8px; border-bottom:2px solid #00796b;">
                     👷 참석 근로자 및 서명 (${tbmData.workers.length}명)
                 </div>
@@ -885,8 +1035,11 @@
                     ${legalHtml}
                 </div>
 
+                ${emergencyHtml}
+
                 <div style="margin-top:15px; padding:10px; background:#f5f5f5; border-radius:5px; font-size:9px; color:#666; text-align:center;">
                     본 기록부는 산업안전보건법 제23조(안전보건교육)에 따른 근로자 안전교육 증빙 자료입니다.
+                    ${companyInfo.documentNumber ? `<br>문서번호: ${companyInfo.documentNumber}` : ''}
                 </div>
             </div>
         `;
