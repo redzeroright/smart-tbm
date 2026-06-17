@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>스마트 TBM 안전보건 시스템 v3.0 - 법적 증빙 강화</title>
-    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root {
@@ -245,12 +245,12 @@
 
                 <div class="no-print" style="margin-top:20px;">
                     <div class="btn-group">
-                        <button type="button" class="btn-print" onclick="window.print()">🖨️고용노동부제출용 출력</button>
+                        <button type="button" class="btn-print" onclick="window.print()">🖨️ 출력</button>
                         <button type="button" class="btn-kakao" onclick="shareTextToKakao()">💬 카톡 보내기</button>
                     </div>
                     <button type="button" class="btn-image" onclick="saveAsImage()">🖼️ 이미지 저장</button>
                     <button type="button" class="btn-settings" onclick="openSettingsModal()">⚙️ 회사 및 현장 정보 설정</button>
-                    <button type="button" class="btn-reset" onclick="confirmReset()">🔄 새로운 TBM 시작(관리자)</button>
+                    <button type="button" class="btn-reset" onclick="confirmReset()">🔄 새로운 TBM 시작</button>
                 </div>
             </div>
         </div>
@@ -530,16 +530,40 @@
 
         syncData();
         
-        const qrDiv = document.getElementById('qrcode');
-        qrDiv.innerHTML = "";
-        new QRCode(qrDiv, {
-            text: window.location.href + "?session=active",
-            width: 180,
-            height: 180
-        });
+        // QR코드 생성 (강화된 로직)
+        generateQRCode();
 
         alert('TBM 세션이 성공적으로 개설되었습니다.\n근로자 서명 단계로 이동합니다.');
         changePage('page-step2', 'btn-tab2');
+        
+        // 페이지 이동 후 QR코드 재생성 (안정성 강화)
+        setTimeout(generateQRCode, 500);
+    }
+    
+    function generateQRCode() {
+        const qrDiv = document.getElementById('qrcode');
+        if (!qrDiv) return;
+        
+        qrDiv.innerHTML = "";
+        
+        try {
+            // 현재 URL에 모바일 서명 모드 파라미터 추가
+            const qrUrl = window.location.href.split('?')[0] + '?mode=mobile_sign&session=' + Date.now();
+            
+            new QRCode(qrDiv, {
+                text: qrUrl,
+                width: 200,
+                height: 200,
+                colorDark: "#00796b",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+            
+            console.log('QR코드 생성 성공:', qrUrl);
+        } catch (error) {
+            console.error('QR코드 생성 오류:', error);
+            qrDiv.innerHTML = '<div style="padding:20px; background:#ffebee; border-radius:8px; text-align:center; color:#d32f2f;"><strong>⚠️ QR코드 생성 오류</strong><br>페이지를 새로고침 후 다시 시도해주세요.</div>';
+        }
     }
 
     function syncData() {
@@ -1051,6 +1075,24 @@
     });
     document.getElementById('settingsModal').addEventListener('click', (e) => {
         if (e.target.id === 'settingsModal') closeSettingsModal();
+    });
+
+    // 페이지 로드 시 URL 파라미터 확인하여 모바일 서명 모드 자동 활성화
+    window.addEventListener('load', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const mode = urlParams.get('mode');
+        const session = urlParams.get('session');
+        
+        if (mode === 'mobile_sign' && session) {
+            console.log('모바일 서명 모드 활성화 (세션:', session, ')');
+            setTimeout(function() {
+                if (tbmData.leader) {
+                    openMobileView();
+                } else {
+                    alert('TBM 세션이 아직 개설되지 않았습니다. 리더가 먼저 TBM을 개설해주세요.');
+                }
+            }, 500);
+        }
     });
 </script>
 
