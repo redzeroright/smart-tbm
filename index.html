@@ -732,7 +732,7 @@
 
     function openSettingsModal() {
         // 비밀번호 인증 절차 추가
-        const password = prompt('환경설정에 접근하려면 관리자 비밀번호를 입력해주세요:', '');
+        const password = prompt('관리자 비밀번호를 입력해주세요(문의:comdak119@naver.com):', '');
         if (password === null) return; // 취소 버튼 클릭
         if (password !== ADMIN_PASSWORD) {
             alert('❌ 비밀번호가 일치하지 않습니다.');
