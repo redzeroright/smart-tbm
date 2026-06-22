@@ -1123,6 +1123,33 @@
         }
     });
 </script>
+// 우마우스금지
+    <style>
+  #donation-banner {
+    display: none;
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    background: #fff;
+    border: 1px solid #ccc;
+    padding: 10px 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    font-size: 14px;
+  }
+</style>
 
+<div id="donation-banner">☕ 코드보기는 금지되어있습니다!</div>
+
+<script>
+  document.addEventListener('contextmenu', function(event) {
+    event.preventDefault();
+    const banner = document.getElementById('donation-banner');
+    banner.style.display = 'block';
+    setTimeout(() => {
+      banner.style.display = 'none';
+    }, 3000); // 3초 후 자동 숨김
+  });
+</script>
 </body>
 </html>
