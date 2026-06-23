@@ -925,7 +925,7 @@
 
         const issues = tbmData.workers.filter(w => w.health !== "이상 없음" || w.feedback !== "없음");
         if (issues.length > 0) {
-            let html = "<strong>⚠️ 주요 특이사항 및 건의사항:</strong><br>";
+            let html = "<strong>⚠️ 의견 및 건의사항:</strong><br>";
             issues.forEach(w => {
                 html += `- ${w.name}: ${w.health === "이상 없음" ? "" : "["+w.health+"]"} ${w.feedback === "없음" ? "" : w.feedback}<br>`;
             });
