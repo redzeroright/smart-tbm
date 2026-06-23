@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>스마트 TBM 안전보건 시스템 v3.0 - 법적 증빙 강화</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <title>스마트 TBM 안전보건 시스템 v3.4 - 법적 증빙 강화</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root {
@@ -50,9 +49,14 @@
         .hazard-text { color: var(--danger-color); font-weight: 700; }
         .measure-text { color: #1565C0; font-weight: 700; }
 
-        .qr-container { text-align: center; padding: 20px; background: #fff; border: 2px dashed var(--primary-color); border-radius: 12px; margin: 20px 0; }
-        #qrcode { display: inline-block; margin-top: 10px; }
-        #qrcode img { margin: 0 auto; }
+        /* 공유 카드 */
+        .share-card { background: #f1f8f6; border: 2px solid #b2dfdb; border-radius: 12px; padding: 16px; margin-bottom: 10px; }
+        .share-btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+        .share-btn-item { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 14px 8px; border: none; border-radius: 12px; cursor: pointer; font-size: 13px; font-weight: 700; color: white; gap: 6px; transition: opacity 0.15s, transform 0.1s; }
+        .share-btn-item:active { opacity: 0.8; transform: scale(0.97); }
+        .share-btn-item .icon { font-size: 26px; }
+        .share-preview { background: white; border: 1px solid #ccc; border-radius: 8px; padding: 12px 14px; font-size: 12px; color: #333; line-height: 1.8; white-space: pre-wrap; word-break: break-all; max-height: 160px; overflow-y: auto; margin: 10px 0 0; }
+        .copy-success { color: #00796b; font-weight: 700; font-size: 13px; text-align: center; margin-top: 8px; display: none; }
 
         #signature-pad { border: 2px solid #d1d9e0; background: #fff; width: 100%; height: 180px; border-radius: 8px; cursor: crosshair; }
         
@@ -115,6 +119,8 @@
         /* 숨겨진 이미지 렌더링 영역 */
         #hidden-render-area { position: fixed; left: -9999px; top: -9999px; width: 800px; background: white; }
 
+
+
         .emergency-box { background: #ffebee; border-left: 5px solid var(--danger-color); padding: 12px; margin: 10px 0; border-radius: 4px; font-size: 13px; }
         .emergency-box strong { color: var(--danger-color); }
 
@@ -137,7 +143,7 @@
 <div class="container">
     <header class="no-print">
         <h1>스마트 TBM 안전보건 시스템</h1>
-        <p>산업안전보건법 준수 · 법적 증빙 강화 v3.0</p>
+        <p>산업안전보건법 준수 · 법적 증빙 강화 v3.4</p>
         
         <div class="nav-tabs">
             <button id="btn-tab1" class="tab-button active-tab" onclick="changePage('page-step1', 'btn-tab1')">1. 세션 개설</button>
@@ -203,13 +209,42 @@
             </div>
 
             <div class="card">
-                <div class="card-title">📲 모바일 입장 QR코드</div>
-                <p style="font-size:13px; color:#666; text-align:center; margin-top:0;">근로자분들은 각자의 스마트폰으로 스캔하여 서명해 주세요.</p>
-                <div class="qr-container">
-                    <div id="qrcode"></div>
-                    <p style="font-size:12px; color:var(--primary-color); font-weight:700; margin-top:10px;">[현장 모바일 서명 세션 활성화 중]</p>
+                <div class="card-title">📲 TBM 내용 공유하기</div>
+
+                <!-- 진행 방법 안내 -->
+                <div style="background:#e3f2fd; border-radius:8px; padding:12px 14px; margin-bottom:14px; font-size:13px; color:#1565c0; line-height:1.8; border-left:4px solid #1565c0;">
+                    <strong>📌 진행 방법</strong><br>
+                    ① 아래 버튼으로 TBM 내용을 카카오톡·문자로 근로자에게 전송<br>
+                    ② 각 근로자가 내용을 확인 후 <strong>이 기기(리더 기기)</strong>에서 서명 완료
                 </div>
-                <button type="button" class="btn-secondary" onclick="openMobileView()">직접 서명하기 (이 기기에서 서명)</button>
+
+                <!-- TBM 내용 미리보기 -->
+                <div id="share-preview-box" class="share-preview">TBM 개설 후 내용이 여기에 표시됩니다.</div>
+
+                <!-- 공유 버튼 그리드 -->
+                <div class="share-btn-grid">
+                    <!-- 카카오톡/문자 네이티브 공유 (모바일 OS 공유 메뉴) -->
+                    <button type="button" class="share-btn-item" style="background:#FEE500; color:#3C1E1E;" onclick="shareNative()">
+                        <span class="icon">💬</span>카카오·문자 공유
+                    </button>
+                    <!-- 클립보드 복사 -->
+                    <button type="button" class="share-btn-item" style="background:#00796b;" onclick="shareCopy()">
+                        <span class="icon">📋</span>내용 복사하기
+                    </button>
+                    <!-- SMS 직접 열기 -->
+                    <button type="button" class="share-btn-item" style="background:#1976d2;" onclick="shareSMS()">
+                        <span class="icon">✉️</span>문자(SMS) 보내기
+                    </button>
+                    <!-- 이메일 열기 -->
+                    <button type="button" class="share-btn-item" style="background:#546e7a;" onclick="shareEmail()">
+                        <span class="icon">📧</span>이메일 보내기
+                    </button>
+                </div>
+                <!-- 복사 완료 메시지 -->
+                <div id="copy-success-msg" class="copy-success">✅ 클립보드에 복사되었습니다! 카카오톡 등에 붙여넣기 하세요.</div>
+
+                <button type="button" onclick="openTbmViewer()" style="background:#1976d2; margin-top:12px;">📋 TBM 내용 전체보기</button>
+                <button type="button" class="btn-secondary" onclick="openMobileView()" style="margin-top:6px;">✍️ 서명하기 (내용 확인 후 서명)</button>
             </div>
 
             <div class="card">
@@ -256,6 +291,60 @@
                 </div>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- TBM 내용 전체보기 뷰어 (이 기기에서 내용 확인용) -->
+<div id="tbm-viewer" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#f0f4f8; z-index:1500; overflow-y:auto;">
+    <div style="background:#00796b; color:white; padding:16px 20px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:10;">
+        <div>
+            <div style="font-size:11px; opacity:0.8;">스마트 TBM v3.0</div>
+            <div style="font-size:17px; font-weight:900;">🛡️ 오늘의 TBM 내용</div>
+        </div>
+        <button type="button" onclick="closeTbmViewer()" style="width:auto; padding:7px 14px; margin:0; background:rgba(255,255,255,0.25); color:white; font-size:13px; border-radius:6px; font-weight:700; border:1px solid rgba(255,255,255,0.4);">✕ 닫기</button>
+    </div>
+    <div style="max-width:480px; margin:0 auto; padding:14px 16px 30px;">
+        <div id="viewer-time" style="background:#e0f2f1; border:1px solid #b2dfdb; border-radius:8px; padding:9px 13px; text-align:center; font-size:13px; font-weight:700; color:#004d40; margin-bottom:13px;"></div>
+
+        <div style="background:white; border-radius:10px; overflow:hidden; border:1px solid #e1e8ed; margin-bottom:12px;">
+            <table style="width:100%; border-collapse:collapse; font-size:14px;">
+                <tr>
+                    <th style="background:#f8f9fa; padding:10px 13px; text-align:left; color:#555; width:32%; border-bottom:1px solid #e1e8ed;">리더</th>
+                    <td id="viewer-leader" style="padding:10px 13px; border-bottom:1px solid #e1e8ed;"></td>
+                </tr>
+                <tr>
+                    <th style="background:#f8f9fa; padding:10px 13px; text-align:left; color:#555; border-bottom:1px solid #e1e8ed;">작업 장소</th>
+                    <td id="viewer-location" style="padding:10px 13px; border-bottom:1px solid #e1e8ed;"></td>
+                </tr>
+                <tr>
+                    <th style="background:#f8f9fa; padding:10px 13px; text-align:left; color:#555;">작업 유형</th>
+                    <td id="viewer-worktype" style="padding:10px 13px;"></td>
+                </tr>
+            </table>
+        </div>
+
+        <div style="background:#ffebee; padding:13px 15px; border-left:5px solid #d32f2f; border-radius:4px; margin-bottom:10px;">
+            <div style="font-weight:800; color:#d32f2f; margin-bottom:6px; font-size:14px;">⚠️ 중점 위험요인</div>
+            <div id="viewer-hazards" style="font-size:14px; line-height:1.8; white-space:pre-wrap;"></div>
+        </div>
+
+        <div style="background:#e3f2fd; padding:13px 15px; border-left:5px solid #1565c0; border-radius:4px; margin-bottom:10px;">
+            <div style="font-weight:800; color:#1565c0; margin-bottom:6px; font-size:14px;">✅ 안전보건 대책</div>
+            <div id="viewer-measures" style="font-size:14px; line-height:1.8; white-space:pre-wrap;"></div>
+        </div>
+
+        <div id="viewer-emergency" style="display:none; background:#ffebee; padding:11px 14px; border-left:5px solid #d32f2f; border-radius:4px; margin-bottom:10px; font-size:13px;"></div>
+
+        <div style="background:#fff8e1; border:2px solid #ffe082; border-radius:10px; padding:15px; margin-top:12px; text-align:center;">
+            <div style="font-size:15px; font-weight:800; color:#f57c00; margin-bottom:6px;">📝 내용을 충분히 숙지하셨나요?</div>
+            <div style="font-size:13px; color:#555; line-height:1.7;">내용 확인 후 닫기 → 서명하기 버튼을 눌러 서명해 주세요.</div>
+        </div>
+
+        <div style="margin-top:12px; background:#e8f5e9; border-radius:8px; padding:11px; text-align:center; font-size:12px; color:#388e3c; line-height:1.6;">
+            🛡️ 산업안전보건법 제23조에 따른 근로자 안전교육 증빙 자료
+        </div>
+
+        <button type="button" onclick="closeTbmViewer(); openMobileView();" style="background:#4caf50; margin-top:16px; font-size:15px; padding:16px; font-weight:800;">✍️ 확인 완료 — 바로 서명하기</button>
     </div>
 </div>
 
@@ -541,41 +630,134 @@
         tbmData.startTime = new Date().toLocaleString('ko-KR');
 
         syncData();
-        
-        // QR코드 생성 (강화된 로직)
-        generateQRCode();
 
-        alert('TBM 세션이 성공적으로 개설되었습니다.\n근로자 서명 단계로 이동합니다.');
+        alert('TBM 세션이 성공적으로 개설되었습니다.\n근로자 서명 단계로 이동합니다.\n\n▶ 2단계에서 공유 버튼으로 TBM 내용을 근로자에게 전송하세요.');
         changePage('page-step2', 'btn-tab2');
-        
-        // 페이지 이동 후 QR코드 재생성 (안정성 강화)
-        setTimeout(generateQRCode, 500);
+
+        // 공유 미리보기 갱신
+        updateSharePreview();
     }
     
-    function generateQRCode() {
-        const qrDiv = document.getElementById('qrcode');
-        if (!qrDiv) return;
-        
-        qrDiv.innerHTML = "";
-        
-        try {
-            // 현재 URL에 모바일 서명 모드 파라미터 추가
-            const qrUrl = window.location.href.split('?')[0] + '?mode=mobile_sign&session=' + Date.now();
-            
-            new QRCode(qrDiv, {
-                text: qrUrl,
-                width: 200,
-                height: 200,
-                colorDark: "#00796b",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.H
-            });
-            
-            console.log('QR코드 생성 성공:', qrUrl);
-        } catch (error) {
-            console.error('QR코드 생성 오류:', error);
-            qrDiv.innerHTML = '<div style="padding:20px; background:#ffebee; border-radius:8px; text-align:center; color:#d32f2f;"><strong>⚠️ QR코드 생성 오류</strong><br>페이지를 새로고침 후 다시 시도해주세요.</div>';
+    // ─────────────────────────────────────────────
+    //  공유용 TBM 텍스트 생성 (공통)
+    // ─────────────────────────────────────────────
+    function buildShareText() {
+        var lines = [];
+        var divider = '━━━━━━━━━━━━━━━━━━━━';
+        lines.push('📋 [TBM 안전교육 내용]');
+        if (companyInfo.name) lines.push('🏢 ' + companyInfo.name);
+        lines.push(divider);
+        lines.push('📅 일시 : ' + tbmData.startTime);
+        lines.push('👷 리더 : ' + tbmData.leader);
+        lines.push('📍 장소 : ' + tbmData.location);
+        lines.push('🔧 작업 : ' + tbmData.worktype);
+        lines.push('⏱ 시간 : ' + tbmData.duration + '분 내외');
+        lines.push(divider);
+        lines.push('⚠️ [위험요인]');
+        lines.push(tbmData.hazards || '-');
+        lines.push('');
+        lines.push('✅ [안전대책]');
+        lines.push(tbmData.measures || '-');
+        if (companyInfo.emergencyHospital || companyInfo.emergencyFire || companyInfo.emergencyInternal) {
+            lines.push(divider);
+            lines.push('🚨 [비상연락처]');
+            if (companyInfo.emergencyHospital) lines.push('병원 : ' + companyInfo.emergencyHospital);
+            if (companyInfo.emergencyFire)     lines.push('소방 : ' + companyInfo.emergencyFire);
+            if (companyInfo.emergencyInternal) lines.push('사내 : ' + companyInfo.emergencyInternal);
         }
+        lines.push(divider);
+        lines.push('* 내용 숙지 후 리더 기기에서 서명해 주세요.');
+        return lines.join('\n');
+    }
+
+    // ─────────────────────────────────────────────
+    //  공유 미리보기 갱신 (TBM 개설 시 호출)
+    // ─────────────────────────────────────────────
+    function updateSharePreview() {
+        var box = document.getElementById('share-preview-box');
+        if (box) box.textContent = buildShareText();
+    }
+
+    // ─────────────────────────────────────────────
+    //  ① 네이티브 공유 (Web Share API)
+    //  모바일 OS 공유 메뉴 → 카카오톡·문자·메모 등 선택 가능
+    // ─────────────────────────────────────────────
+    function shareNative() {
+        if (!tbmData.leader) { alert('⚠️ 먼저 1단계에서 TBM을 개설해주세요.'); return; }
+        var text = buildShareText();
+        if (navigator.share) {
+            navigator.share({ title: 'TBM 안전교육 내용', text: text })
+                .catch(function(err) {
+                    // 사용자가 직접 취소한 경우 AbortError → 무시
+                    if (err && err.name !== 'AbortError') {
+                        alert('공유 중 오류가 발생했습니다.\n클립보드 복사를 이용해 주세요.');
+                    }
+                });
+        } else {
+            // 데스크톱 등 Web Share API 미지원 환경 → 복사로 대체
+            copyToClipboard(text);
+            alert('이 기기는 직접 공유가 지원되지 않습니다.\n내용을 클립보드에 복사했습니다.\n카카오톡 등에 붙여넣기 하세요.');
+        }
+    }
+
+    // ─────────────────────────────────────────────
+    //  ② 클립보드 복사
+    // ─────────────────────────────────────────────
+    function shareCopy() {
+        if (!tbmData.leader) { alert('⚠️ 먼저 1단계에서 TBM을 개설해주세요.'); return; }
+        var text = buildShareText();
+        copyToClipboard(text, true);
+    }
+
+    function copyToClipboard(text, showMsg) {
+        var msg = document.getElementById('copy-success-msg');
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(function() {
+                if (showMsg && msg) { msg.style.display = 'block'; setTimeout(function(){ msg.style.display='none'; }, 3000); }
+            }).catch(function() {
+                fallbackCopy(text, showMsg);
+            });
+        } else {
+            fallbackCopy(text, showMsg);
+        }
+    }
+
+    function fallbackCopy(text, showMsg) {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.cssText = 'position:fixed;left:-9999px;top:-9999px;opacity:0;';
+        document.body.appendChild(ta);
+        ta.focus(); ta.select();
+        try {
+            document.execCommand('copy');
+            var msg = document.getElementById('copy-success-msg');
+            if (showMsg && msg) { msg.style.display = 'block'; setTimeout(function(){ msg.style.display='none'; }, 3000); }
+        } catch(e) {
+            alert('복사에 실패했습니다. 미리보기 텍스트를 직접 선택해서 복사해 주세요.');
+        }
+        document.body.removeChild(ta);
+    }
+
+    // ─────────────────────────────────────────────
+    //  ③ SMS 문자 직접 열기
+    // ─────────────────────────────────────────────
+    function shareSMS() {
+        if (!tbmData.leader) { alert('⚠️ 먼저 1단계에서 TBM을 개설해주세요.'); return; }
+        var text = buildShareText();
+        // sms: URI — iOS는 &body=, Android는 ?body= 둘 다 인식
+        var smsUri = 'sms:?body=' + encodeURIComponent(text);
+        window.location.href = smsUri;
+    }
+
+    // ─────────────────────────────────────────────
+    //  ④ 이메일 열기
+    // ─────────────────────────────────────────────
+    function shareEmail() {
+        if (!tbmData.leader) { alert('⚠️ 먼저 1단계에서 TBM을 개설해주세요.'); return; }
+        var text = buildShareText();
+        var subject = encodeURIComponent('[TBM] ' + (tbmData.startTime || '') + ' 안전교육 내용');
+        var body    = encodeURIComponent(text);
+        window.location.href = 'mailto:?subject=' + subject + '&body=' + body;
     }
 
     function syncData() {
@@ -624,6 +806,37 @@
     window.addEventListener('touchend', () => isDrawing = false);
 
     function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+
+    function openTbmViewer() {
+        // TBM 내용 전체보기 뷰어 (이 기기에서 내용 확인용)
+        document.getElementById('viewer-time').textContent = '⏱️ TBM 실시 일시: ' + tbmData.startTime;
+        document.getElementById('viewer-leader').textContent = tbmData.leader;
+        document.getElementById('viewer-location').textContent = tbmData.location;
+        document.getElementById('viewer-worktype').textContent = tbmData.worktype;
+        document.getElementById('viewer-hazards').textContent = tbmData.hazards;
+        document.getElementById('viewer-measures').textContent = tbmData.measures;
+
+        // 비상연락처
+        const emerDiv = document.getElementById('viewer-emergency');
+        const emerLines = [];
+        if (companyInfo.emergencyHospital) emerLines.push('응급실: ' + companyInfo.emergencyHospital);
+        if (companyInfo.emergencyFire)     emerLines.push('소방서: ' + companyInfo.emergencyFire);
+        if (companyInfo.emergencyInternal) emerLines.push('사내긴급: ' + companyInfo.emergencyInternal);
+        if (companyInfo.emergencyAssembly) emerLines.push('집결지: ' + companyInfo.emergencyAssembly);
+        if (emerLines.length) {
+            emerDiv.style.display = 'block';
+            emerDiv.innerHTML = '<b style="color:#d32f2f">🚨 비상연락처</b><br>' + emerLines.join('<br>');
+        } else {
+            emerDiv.style.display = 'none';
+        }
+
+        document.getElementById('tbm-viewer').style.display = 'block';
+        document.getElementById('tbm-viewer').scrollTop = 0;
+    }
+
+    function closeTbmViewer() {
+        document.getElementById('tbm-viewer').style.display = 'none';
+    }
 
     function openMobileView() {
         document.getElementById('mobile-view').style.display = 'block';
@@ -732,7 +945,7 @@
 
     function openSettingsModal() {
         // 비밀번호 인증 절차 추가
-        const password = prompt('관리자 비밀번호를 입력해주세요(문의:comdak119@naver.com)', '');
+        const password = prompt('관리자 비밀번호(문의:comdak119@naver.com)', '');
         if (password === null) return; // 취소 버튼 클릭
         if (password !== ADMIN_PASSWORD) {
             alert('❌ 비밀번호가 일치하지 않습니다.');
@@ -1105,14 +1318,13 @@
         if (e.target.id === 'settingsModal') closeSettingsModal();
     });
 
-    // 페이지 로드 시 URL 파라미터 확인하여 모바일 서명 모드 자동 활성화
+    // 페이지 로드 시 URL 파라미터 확인 (기존 mobile_sign 호환 유지)
     window.addEventListener('load', function() {
         const urlParams = new URLSearchParams(window.location.search);
         const mode = urlParams.get('mode');
         const session = urlParams.get('session');
-        
+
         if (mode === 'mobile_sign' && session) {
-            console.log('모바일 서명 모드 활성화 (세션:', session, ')');
             setTimeout(function() {
                 if (tbmData.leader) {
                     openMobileView();
@@ -1123,7 +1335,7 @@
         }
     });
 </script>
-// 우마우스금지
+  // 우마우스금지
     <style>
   #donation-banner {
     display: none;
@@ -1150,6 +1362,6 @@
       banner.style.display = 'none';
     }, 3000); // 3초 후 자동 숨김
   });
-</script>
+</script>  
 </body>
 </html>
